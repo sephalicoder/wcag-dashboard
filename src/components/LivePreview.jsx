@@ -22,7 +22,7 @@ export default function LivePreview({ code }) {
               font-family: sans-serif;
               box-sizing: border-box;
             }
-            ${code}
+            ${code.replace(/<[^>]*>/g, "")}
           </style>
         </head>
         <body>
@@ -50,11 +50,11 @@ export default function LivePreview({ code }) {
         <span className="text-xs text-gray-500 ml-2">Live Preview</span>
       </div>
       <iframe
-        ref={iframeRef}
-        className="w-full h-56 border-0"
-        title="Component Preview"
-        sandbox="allow-same-origin"
-      />
+  ref={iframeRef}
+  className="w-full h-56 border-0"
+  title="Component Preview"
+  sandbox="allow-scripts allow-same-origin"
+/>
     </div>
   )
 }

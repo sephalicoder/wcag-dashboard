@@ -3,6 +3,9 @@ module.exports = {
     node: true,
     es2022: true
   },
+  globals: {
+    process: "readonly"
+  },
   rules: {
     "no-undef": "off"
   }
