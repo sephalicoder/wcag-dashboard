@@ -6,6 +6,8 @@ export default function AIFixPanel({ originalCode }) {
   const [copied, setCopied] = useState(false)
 
   async function handleGetFix() {
+    console.log("originalCode:", originalCode) // add this line
+  if (!originalCode?.trim()) return
     setLoading(true)
     setFixedCSS("")
 
@@ -42,7 +44,7 @@ export default function AIFixPanel({ originalCode }) {
         </div>
         <button
           onClick={handleGetFix}
-          disabled={loading}
+          disabled={loading || !originalCode?.trim()}
           className="bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
         >
           {loading ? (
