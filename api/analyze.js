@@ -35,33 +35,40 @@ ${code}`
 ${code}`
 
   try {
-    const apiKey = globalThis.process?.env?.GEMINI_API_KEY
+    // eslint-disable-next-line no-undef
+    const apiKey = process.env.GROQ_API_KEY
 
     // ✅ Security Check 6 — Make sure API key exists
     if (!apiKey) {
       return res.status(500).json({ error: "Server configuration error" })
     }
 
+    // ✅ Now using Groq API instead of Gemini
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
+          model: "llama3-8b-8192",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 1000
         })
       }
     )
 
-    // ✅ Security Check 7 — Handle Gemini API errors
+    // ✅ Handle Groq API errors
     if (!response.ok) {
       const errorData = await response.json()
-      console.error("Gemini API error:", errorData)
+      console.error("Groq API error:", errorData)
       return res.status(502).json({ error: "AI service error. Please try again." })
     }
 
     const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+    const text = data.choices?.[0]?.message?.content || ""
 
     return res.status(200).json({ result: text.trim() })
 
