@@ -5,11 +5,16 @@ export default function InputPanel({ onResult }) {
   const [code, setCode] = useState("")
   const [loading, setLoading] = useState(false)
 
-  async function handleAnalyze() {
+  async function handleAnalyze(e) {
+    if (e) e.preventDefault()
     if (!code.trim()) return
     setLoading(true)
-    const result = await analyzeComponent(code)
-    onResult(result)
+    try {
+      const result = await analyzeComponent(code)
+      onResult(result, code)
+    } catch {
+      console.error("Analysis failed")
+    }
     setLoading(false)
   }
 
@@ -23,10 +28,14 @@ export default function InputPanel({ onResult }) {
         placeholder={`/* Example — paste any CSS or component */\n.button {\n  background: #ffffff;\n  color: #cccccc;\n}`}
         value={code}
         onChange={e => setCode(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === "Enter" && e.ctrlKey) handleAnalyze(e)
+        }}
       />
 
       <div className="flex items-center gap-4 mt-3">
         <button
+          type="button"
           onClick={handleAnalyze}
           disabled={loading || !code.trim()}
           className="bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-bold px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
@@ -47,6 +56,10 @@ export default function InputPanel({ onResult }) {
           </p>
         )}
       </div>
+
+      <p className="text-xs text-gray-600 mt-2">
+        Tip: Press Ctrl + Enter to analyze quickly
+      </p>
     </div>
   )
 }
