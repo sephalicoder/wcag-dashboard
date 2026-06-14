@@ -4,24 +4,47 @@ export default function AIFixPanel({ originalCode }) {
   const [fixedCSS, setFixedCSS] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState("")
 
-  async function handleGetFix() {
-    console.log("originalCode:", originalCode) // add this line
-  if (!originalCode?.trim()) return
+  async function handleGetFix(e) {
+    if (e) e.preventDefault()
+    if (!originalCode?.trim()) {
+      setError("No component code found. Please analyze a component first.")
+      return
+    }
+
     setLoading(true)
     setFixedCSS("")
+    setError("")
 
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: originalCode, type: "fix" })
+        body: JSON.stringify({
+          code: originalCode,
+          type: "fix"
+        })
       })
+
+      // Show exact error if not ok
+      if (!response.ok) {
+        const errData = await response.json()
+        setError(`Server error ${response.status}: ${errData.error || "Unknown error"}`)
+        setLoading(false)
+        return
+      }
+
       const data = await response.json()
-      setFixedCSS(data.result || "/* No fix generated */")
-    } catch (e) {
-      setFixedCSS("/* Error getting fix — please try again */")
-      console.error(e)
+
+      if (data.result) {
+        setFixedCSS(data.result)
+      } else {
+        setError("AI returned empty response. Please try again.")
+      }
+
+    } catch {
+      setError("Network error — please check your connection and try again.")
     }
 
     setLoading(false)
@@ -41,8 +64,18 @@ export default function AIFixPanel({ originalCode }) {
           <p className="text-xs text-gray-500 mt-0.5">
             Gemini rewrites your CSS to pass WCAG AA
           </p>
+          {originalCode?.trim() ? (
+            <p className="text-xs text-green-500 mt-0.5">
+              ✅ Component loaded ({originalCode.length} chars)
+            </p>
+          ) : (
+            <p className="text-xs text-red-400 mt-0.5">
+              ⚠️ No component detected
+            </p>
+          )}
         </div>
         <button
+          type="button"
           onClick={handleGetFix}
           disabled={loading || !originalCode?.trim()}
           className="bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-bold px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
@@ -58,6 +91,14 @@ export default function AIFixPanel({ originalCode }) {
         </button>
       </div>
 
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-900/30 border border-red-700 rounded-lg p-3">
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
+
+      {/* Fixed CSS output */}
       {fixedCSS && (
         <div className="space-y-2">
           <div className="relative">
@@ -65,6 +106,7 @@ export default function AIFixPanel({ originalCode }) {
               {fixedCSS}
             </pre>
             <button
+              type="button"
               onClick={handleCopy}
               className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 text-xs text-white px-3 py-1 rounded-md transition-colors"
             >
