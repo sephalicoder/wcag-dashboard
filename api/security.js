@@ -13,7 +13,7 @@ const MAX_INPUT_LENGTH = 5000  // max characters allowed
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://wcag-dashboard.vercel.app", // replace with your actual vercel URL
+  "https://wcag-dashboard-omega.vercel.app", // replace with your actual vercel URL
 ]
 
 // ✅ Check 1 — CORS Protection
@@ -98,13 +98,10 @@ export function validateInput(req, res) {
 
   // Check for suspicious patterns (basic XSS / injection)
   const suspiciousPatterns = [
-    /<script/i,
-    /javascript:/i,
-    /on\w+\s*=/i,      // onclick=, onload=, etc.
-    /eval\s*\(/i,
-    /document\./i,
-    /window\./i,
-  ]
+  /<script\s/i,
+  /javascript:\s*\S/i,
+  /eval\s*\(\s*['"]/i,
+]
 
   const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(code))
   if (isSuspicious) {
@@ -119,8 +116,10 @@ export function validateInput(req, res) {
 
 // ✅ Check 4 — Sanitize input before sending to AI
 export function sanitizeInput(code) {
+  // eslint-disable-next-line no-control-regex
+  const controlChars = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g
   return code
     .trim()
-    .slice(0, MAX_INPUT_LENGTH)  // hard truncate
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "") // remove control chars
+    .slice(0, MAX_INPUT_LENGTH)
+    .replace(controlChars, "")
 }
